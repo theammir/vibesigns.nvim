@@ -1,8 +1,8 @@
-local config = require('gitsigns-vibecoded.config')
-local blame = require('gitsigns-vibecoded.blame')
-local map = require('gitsigns-vibecoded.map')
-local signs = require('gitsigns-vibecoded.signs')
-local git = require('gitsigns-vibecoded.git')
+local config = require('vibesigns.config')
+local blame = require('vibesigns.blame')
+local map = require('vibesigns.map')
+local signs = require('vibesigns.signs')
+local git = require('vibesigns.git')
 
 local api = vim.api
 
@@ -119,7 +119,7 @@ local function schedule_refresh(bufnr)
 end
 
 local function define_hl()
-  api.nvim_set_hl(0, 'GitSignsVibecodedDim', { fg = M.config.color, default = false })
+  api.nvim_set_hl(0, 'VibeSignsDim', { fg = M.config.color, default = false })
 end
 
 --- @param opts table?
@@ -131,7 +131,7 @@ function M.setup(opts)
     return
   end
   define_hl()
-  local group = api.nvim_create_augroup('GitSignsVibecoded', { clear = true })
+  local group = api.nvim_create_augroup('VibeSigns', { clear = true })
   api.nvim_create_autocmd('ColorScheme', { group = group, callback = define_hl })
   api.nvim_create_autocmd({ 'BufReadPost', 'BufWritePost' }, {
     group = group,

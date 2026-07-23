@@ -1,4 +1,4 @@
-local config = require('gitsigns-vibecoded.config')
+local config = require('vibesigns.config')
 
 describe('config.resolve', function()
   it('returns defaults when given nothing', function()
@@ -60,6 +60,8 @@ describe('config.is_agent_email', function()
     assert.is_false(config.is_agent_email('not-an-email', { 'a@b.com' }))
     assert.is_false(config.is_agent_email('', { { 'domain', 'a.com' } }))
     -- non-string/non-table, unknown mode, missing/non-string value → skipped
-    assert.is_false(config.is_agent_email('a@b.com', { 123, {}, { 'nope', 'a@b.com' }, { 'exact' } }))
+    assert.is_false(
+      config.is_agent_email('a@b.com', { 123, {}, { 'nope', 'a@b.com' }, { 'exact' } })
+    )
   end)
 end)

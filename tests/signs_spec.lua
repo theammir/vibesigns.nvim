@@ -1,5 +1,5 @@
-local signs = require('gitsigns-vibecoded.signs')
-local config = require('gitsigns-vibecoded.config')
+local signs = require('vibesigns.signs')
+local config = require('vibesigns.config')
 
 local function make_buf(lines)
   local buf = vim.api.nvim_create_buf(false, true)
@@ -16,7 +16,7 @@ describe('signs', function()
     local rows = { marks[1][2], marks[2][2] }
     table.sort(rows)
     assert.same({ 0, 2 }, rows) -- 0-based rows for lines 1 and 3
-    assert.equals('GitSignsVibecodedDim', marks[1][4].sign_hl_group)
+    assert.equals('VibeSignsDim', marks[1][4].sign_hl_group)
     -- Neovim right-pads narrow sign_text to fill the signcolumn's 2-cell
     -- width when storing/reading extmarks, so trim before comparing.
     assert.equals('┃', vim.trim(marks[1][4].sign_text))

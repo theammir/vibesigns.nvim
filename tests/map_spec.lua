@@ -1,4 +1,4 @@
-local map = require('gitsigns-vibecoded.map')
+local map = require('vibesigns.map')
 
 describe('map.current_agent_lines', function()
   it('identity when buffer equals HEAD', function()

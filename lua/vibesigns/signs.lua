@@ -2,7 +2,7 @@ local api = vim.api
 
 local M = {}
 
-M.ns = api.nvim_create_namespace('gitsigns_vibecoded')
+M.ns = api.nvim_create_namespace('vibesigns')
 
 --- @param bufnr integer
 function M.clear(bufnr)
@@ -24,7 +24,7 @@ function M.set(bufnr, lines, cfg)
     if lnum >= 1 and lnum <= count then
       pcall(api.nvim_buf_set_extmark, bufnr, M.ns, lnum - 1, 0, {
         sign_text = cfg.sign_text,
-        sign_hl_group = 'GitSignsVibecodedDim',
+        sign_hl_group = 'VibeSignsDim',
         priority = cfg.priority,
       })
     end

@@ -1,6 +1,6 @@
 local repo = require('tests.support.repo')
-local blame = require('gitsigns-vibecoded.blame')
-local config = require('gitsigns-vibecoded.config')
+local blame = require('vibesigns.blame')
+local config = require('vibesigns.config')
 
 --- Run async blame.compute synchronously for tests.
 local function compute_sync(dir, relpath, cfg)
@@ -19,7 +19,13 @@ describe('blame.compute', function()
   it('flags lines from a co-authored agent commit', function()
     local dir, git = repo.new()
     repo.commit(dir, git, 'f.txt', { 'human line' }, { author = 'human@example.com' })
-    repo.commit(dir, git, 'f.txt', { 'human line', 'agent line' }, { coauthor = 'noreply@anthropic.com' })
+    repo.commit(
+      dir,
+      git,
+      'f.txt',
+      { 'human line', 'agent line' },
+      { coauthor = 'noreply@anthropic.com' }
+    )
 
     local cfg = config.resolve()
     local r = compute_sync(dir, 'f.txt', cfg)

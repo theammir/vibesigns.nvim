@@ -1,4 +1,4 @@
-local git = require('gitsigns-vibecoded.git')
+local git = require('vibesigns.git')
 
 describe('git.parse_blame_porcelain', function()
   it('extracts content, sha and author email per line in order', function()

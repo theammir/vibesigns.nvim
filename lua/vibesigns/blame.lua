@@ -1,5 +1,5 @@
-local git = require('gitsigns-vibecoded.git')
-local config = require('gitsigns-vibecoded.config')
+local git = require('vibesigns.git')
+local config = require('vibesigns.config')
 
 local M = {}
 
