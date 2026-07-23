@@ -35,7 +35,7 @@ function M.compute(dir, relpath, cfg, cb)
       for i = 1, #parsed.lines do
         local sha = parsed.sha[i]
         if sha_is_agent[sha] == nil then
-          if config.is_agent_email(parsed.author[i], cfg.agent_emails, cfg.match) then
+          if config.is_agent_email(parsed.author[i], cfg.agent_emails) then
             sha_is_agent[sha] = true
           else
             shas_needing_trailer[sha] = true
@@ -64,7 +64,7 @@ function M.compute(dir, relpath, cfg, cb)
         git.coauthors(dir, sha, function(emails)
           local is_agent = false
           for _, e in ipairs(emails) do
-            if config.is_agent_email(e, cfg.agent_emails, cfg.match) then
+            if config.is_agent_email(e, cfg.agent_emails) then
               is_agent = true
               break
             end
