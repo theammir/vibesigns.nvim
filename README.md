@@ -1,4 +1,8 @@
-# vibesigns.nvim
+<div align="center">
+  <img width="520" alt="image" src="https://github.com/user-attachments/assets/bb4c5862-4a39-43af-a792-b8df60e686e4" />
+  <h1><b>vibesigns.nvim</b></h1>
+</div>
+
 
 Marks lines co-authored by LLM agents in the `gitsigns.nvim` signcolumn, so you can always eyeball the code that -- chances are -- was never read by a single living mortal soul.
 I mean seriously, do people even interact with raw code in the industry anymore? This is a cry for help.
