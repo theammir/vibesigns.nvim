@@ -61,15 +61,8 @@ function M.compute(dir, relpath, cfg, cb)
       end
       local remaining = #pending
       for _, sha in ipairs(pending) do
-        git.coauthors(dir, sha, function(emails)
-          local is_agent = false
-          for _, e in ipairs(emails) do
-            if config.is_agent_email(e, cfg.agent_emails) then
-              is_agent = true
-              break
-            end
-          end
-          sha_is_agent[sha] = is_agent
+        git.trailers(dir, sha, function(trailers)
+          sha_is_agent[sha] = M.trailers_are_agent(trailers, cfg)
           remaining = remaining - 1
           if remaining == 0 then
             finish()
@@ -78,6 +71,25 @@ function M.compute(dir, relpath, cfg, cb)
       end
     end)
   end)
+end
+
+--- Do a commit's trailers mark it as agent-made? True when a `Co-authored-by`
+--- address matches `agent_emails`, or any trailer matches `agent_trailers`.
+--- @param trailers { key: string, value: string }[]
+--- @param cfg table
+--- @return boolean
+function M.trailers_are_agent(trailers, cfg)
+  for _, e in ipairs(git.coauthor_emails(trailers)) do
+    if config.is_agent_email(e, cfg.agent_emails) then
+      return true
+    end
+  end
+  for _, t in ipairs(trailers) do
+    if config.is_agent_trailer(t.key, t.value, cfg.agent_trailers) then
+      return true
+    end
+  end
+  return false
 end
 
 --- Test/maintenance hook: drop all caches.

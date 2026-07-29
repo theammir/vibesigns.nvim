@@ -69,6 +69,33 @@ describe('gitsigns-vibecoded end-to-end', function()
     assert.same({ 1 }, rows) -- only buffer row 1 (0-based) = 'agentline'
   end)
 
+  it('signs lines from a commit trailer match (Made-with: Cursor)', function()
+    local dir, git = repo.new()
+    repo.commit(dir, git, 'f.txt', { 'human1' }, { author = 'human@example.com' })
+    repo.commit(dir, git, 'f.txt', { 'human1', 'agentline' }, {
+      author = 'human@example.com',
+      trailers = { 'Made-with: Cursor' },
+    })
+
+    require('vibesigns.blame')._reset_cache()
+    gv.setup({})
+    local buf = vim.api.nvim_create_buf(false, false)
+    vim.api.nvim_buf_set_name(buf, dir .. '/f.txt')
+    vim.api.nvim_buf_call(buf, function()
+      vim.cmd('edit!')
+    end)
+
+    refresh_sync(buf)
+
+    local ns = require('vibesigns.signs').ns
+    local marks = vim.api.nvim_buf_get_extmarks(buf, ns, 0, -1, {})
+    local rows = {}
+    for _, m in ipairs(marks) do
+      rows[#rows + 1] = m[2]
+    end
+    assert.same({ 1 }, rows) -- only 'agentline'
+  end)
+
   it('setup with enabled=false places no signs', function()
     local dir, git = repo.new()
     repo.commit(dir, git, 'f.txt', { 'x' }, { coauthor = 'noreply@anthropic.com' })

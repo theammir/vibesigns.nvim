@@ -3,11 +3,10 @@
   <h1><b>vibesigns.nvim</b></h1>
 </div>
 
-
 Marks lines co-authored by LLM agents in the `gitsigns.nvim` signcolumn, so you can always eyeball the code that -- chances are -- was never read by a single living mortal soul.
 I mean seriously, do people even interact with raw code in the industry anymore? This is a cry for help.
 
-A line is considered LLM-written if its `git blame` shows that either the author or one of co-authors of the commit is among configured e-mail addresses.
+A line is considered LLM-written if its `git blame` points at a commit whose author or one of whose co-authors is among the configured e-mail addresses, or whose commit trailers match one of the configured trailer rules (e.g. Cursor's `Made-with: Cursor`).
 
 Yes, this plugin was also vibe-coded, and within like an hour while I was showering, too. Boo-o-o.
 
@@ -48,6 +47,11 @@ require('vibesigns').setup({
     'devin@devin.ai', -- Devin
     '198982749+Copilot@users.noreply.github.com', -- GitHub Copilot agent
   },
+  -- Arbitrary commit trailers. Key = trailer name (case-insensitive),
+  -- value = Lua pattern or list of them, matched case-insensitively.
+  agent_trailers = {
+    ['Made-with'] = { 'Cursor' }, -- Cursor
+  },
 })
 ```
 
@@ -59,6 +63,7 @@ require('vibesigns').setup({
 | `priority` | number | `3` | Sign extmark priority. Kept below gitsigns' own sign priority (`6`) so gitsigns' add/change/delete marks always win the signcolumn slot. |
 | `color` | string | `'#9c6a2f'` | Foreground color (hex) used to define the `VibeSignsDim` highlight group. |
 | `agent_emails` | (string / table)[] | see above | Addresses recognized as AI agents. Each entry carries its own match mode — see below. |
+| `agent_trailers` | table\<string, string / string[]> | `{ ['Made-with'] = { 'Cursor' } }` | Arbitrary commit trailers recognized as AI agents, keyed by trailer name. See below. |
 
 ### `agent_emails` entries
 
@@ -74,6 +79,40 @@ Each element in the `agent_emails` table is either:
   { 'exact',  'noreply@anthropic.com' } -- same as the bare string form
   { 'domain', 'devin.ai' }              -- flags every address @devin.ai
   ```
+
+`agent_emails` is checked against the blame author of a commit and against the
+addresses in its `Co-authored-by:` trailers.
+
+### `agent_trailers` entries
+
+`Co-authored-by:` is not the only way agentic tools mark their commits — Cursor,
+for instance, adds `Made-with: Cursor`. `agent_trailers` maps a trailer name to
+the [Lua pattern](https://www.lua.org/manual/5.1/manual.html#5.4.1) (or list of
+patterns) its value must match:
+
+```lua
+agent_trailers = {
+  ['Made-with'] = { 'Cursor', 'Aider' }, -- flags `Made-with: Cursor` or `: Aider`
+  ['Generated-with'] = 'Copilot', -- a bare string works as a single pattern
+  ['Agent-version'] = { '^claude%-%d+$' }, -- full Lua pattern syntax
+}
+```
+
+- Trailer **names** are matched case-insensitively (a trailing `:` is tolerated).
+- Trailer **values** are matched case-insensitively with `string.find`, so
+  patterns are **unanchored**: `'Cursor'` also flags `Made-with: Cursor 1.7.3`.
+  Use `^...$` when you want an exact value.
+- Because these are Lua patterns and not plain text, escape magic characters
+  (`.`, `-`, `+`, `(`, `)`, ...) with `%` if you mean them literally.
+- Use `'.*'` to match on the mere presence of the trailer, whatever its value.
+- Malformed patterns are ignored rather than raising an error.
+- Matching is case-insensitive by default; opt out per rule with
+  `['Made-with'] = { 'Cursor', ignore_case = false }`. Trailer *names* stay
+  case-insensitive either way, as git itself treats them so.
+
+Only trailers you configure are matched. The point is to mark *agent
+authorship*, so trailers left by other tooling (`Change-Id:`, `Signed-off-by:`,
+dependency bots, and so on) stay unsigned unless you add them yourself.
 
 ## Highlight group
 

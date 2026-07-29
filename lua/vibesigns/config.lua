@@ -16,6 +16,12 @@ M.defaults = {
     'devin@devin.ai', -- Devin
     '198982749+Copilot@users.noreply.github.com', -- GitHub Copilot agent
   },
+  -- Arbitrary commit trailers, beyond Co-authored-by. Keys are trailer names
+  -- (matched case-insensitively); each value is a Lua pattern, or a list of
+  -- them, matched unanchored and case-insensitively against the trailer value.
+  agent_trailers = {
+    ['Made-with'] = { 'Cursor' }, -- Cursor
+  },
 }
 
 --- Extract a bare lowercased email from "Name <a@b>" or "a@b".
@@ -66,14 +72,47 @@ local function normalize_entry(entry)
   return nil
 end
 
+--- Lowercase the literal letters of a Lua pattern while leaving `%`-escapes
+--- (character classes such as `%a`, `%D`) intact, so the pattern keeps its
+--- meaning when matched against a lowercased subject.
+--- @param pat string
+--- @return string
+local function lower_pattern(pat)
+  local out, i, n = {}, 1, #pat
+  while i <= n do
+    local c = pat:sub(i, i)
+    if c == '%' then
+      out[#out + 1] = pat:sub(i, math.min(i + 1, n))
+      i = i + 2
+    else
+      out[#out + 1] = c:lower()
+      i = i + 1
+    end
+  end
+  return table.concat(out)
+end
+
+--- Canonical form of a trailer key: trimmed, lowercased, trailing ':' dropped.
+--- @param key string
+--- @return string?
+local function normalize_key(key)
+  if type(key) ~= 'string' then
+    return nil
+  end
+  local k = vim.trim(key):gsub(':%s*$', ''):lower()
+  return k ~= '' and k or nil
+end
+
 --- Is `email` (bare or angle-wrapped) an agent address per the entry list?
 --- Match mode is decided per entry (see normalize_entry).
 --- @param email string
---- @param agent_emails (string|table)[]
+--- @param agent_emails (string|table)[]?
 --- @return boolean
 function M.is_agent_email(email, agent_emails)
   local norm = normalize(email)
-  if not norm then
+  -- Called from async blame callbacks on every commit lookup, so a mistyped
+  -- config must return false rather than raise into the user's session.
+  if not norm or type(agent_emails) ~= 'table' then
     return false
   end
   local norm_domain = norm:match('@(.+)$')
@@ -92,10 +131,58 @@ function M.is_agent_email(email, agent_emails)
   return false
 end
 
+--- Does the trailer `key: value` match any configured agent trailer rule?
+--- Keys compare case-insensitively; values are tested with `string.find`
+--- against each configured Lua pattern (unanchored, case-insensitive), so
+--- `'Cursor'` matches `Made-with: Cursor 1.7`. Anchor with `^...$` for an
+--- exact match. A rule may opt out of case folding with
+--- `{ 'Cursor', ignore_case = false }`.
+--- @param key string
+--- @param value string
+--- @param agent_trailers table<string, string|table>?
+--- @return boolean
+function M.is_agent_trailer(key, value, agent_trailers)
+  local k = normalize_key(key)
+  if not k or type(value) ~= 'string' or type(agent_trailers) ~= 'table' then
+    return false
+  end
+  local trimmed = vim.trim(value)
+  for rule_key, patterns in pairs(agent_trailers) do
+    if normalize_key(rule_key) == k then
+      if type(patterns) == 'string' then
+        patterns = { patterns }
+      end
+      if type(patterns) == 'table' then
+        local fold = patterns.ignore_case ~= false
+        local subject = fold and trimmed:lower() or trimmed
+        for _, pat in ipairs(patterns) do
+          if type(pat) == 'string' and pat ~= '' then
+            local ok, found = pcall(string.find, subject, fold and lower_pattern(pat) or pat)
+            if ok and found then
+              return true
+            end
+          end
+        end
+      end
+    end
+  end
+  return false
+end
+
 --- @param opts table?
 --- @return table
 function M.resolve(opts)
-  return vim.tbl_deep_extend('force', vim.deepcopy(M.defaults), opts or {})
+  opts = opts or {}
+  local cfg = vim.tbl_deep_extend('force', vim.deepcopy(M.defaults), opts)
+  -- Rule collections are replaced wholesale, never merged key-by-key, so a
+  -- user list is exactly what gets matched (and defaults can be dropped).
+  if opts.agent_emails ~= nil then
+    cfg.agent_emails = vim.deepcopy(opts.agent_emails)
+  end
+  if opts.agent_trailers ~= nil then
+    cfg.agent_trailers = vim.deepcopy(opts.agent_trailers)
+  end
+  return cfg
 end
 
 return M

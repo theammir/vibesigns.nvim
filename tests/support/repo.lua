@@ -23,7 +23,7 @@ end
 --- @param git fun(...):string
 --- @param relpath string
 --- @param lines string[]
---- @param opts { msg?: string, coauthor?: string, author?: string }?
+--- @param opts { msg?: string, coauthor?: string, author?: string, trailers?: string[] }?
 function M.commit(dir, git, relpath, lines, opts)
   opts = opts or {}
   local path = dir .. '/' .. relpath
@@ -32,6 +32,11 @@ function M.commit(dir, git, relpath, lines, opts)
   local msg = opts.msg or 'change'
   if opts.coauthor then
     msg = msg .. '\n\nCo-authored-by: Agent <' .. opts.coauthor .. '>'
+  end
+  if opts.trailers and #opts.trailers > 0 then
+    -- Trailers must sit in the last paragraph; reuse it if one was just added.
+    local sep = opts.coauthor and '\n' or '\n\n'
+    msg = msg .. sep .. table.concat(opts.trailers, '\n')
   end
   local env = {}
   if opts.author then

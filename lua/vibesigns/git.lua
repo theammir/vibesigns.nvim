@@ -35,6 +35,38 @@ function M.parse_blame_porcelain(stdout)
   return out
 end
 
+--- Parse `git show --format=%(trailers:only,unfold)` output into ordered
+--- key/value pairs. Non-trailer noise (blank lines, lines without a ':') is
+--- skipped. Keys/values are trimmed; case is preserved for the caller.
+--- @param stdout string
+--- @return { key: string, value: string }[]
+function M.parse_trailers(stdout)
+  local out = {}
+  for _, line in ipairs(vim.split(stdout or '', '\n', { plain = true })) do
+    local key, value = line:match('^([^%s:][^:]*):%s?(.*)$')
+    if key then
+      out[#out + 1] = { key = vim.trim(key), value = vim.trim(value) }
+    end
+  end
+  return out
+end
+
+--- Bare lowercased emails found in `Co-authored-by` trailers.
+--- @param trailers { key: string, value: string }[]
+--- @return string[]
+function M.coauthor_emails(trailers)
+  local emails = {}
+  for _, t in ipairs(trailers) do
+    if t.key:lower() == 'co-authored-by' then
+      local e = t.value:match('<([^>]+)>') or t.value:match('(%S+@%S+)')
+      if e then
+        emails[#emails + 1] = e:gsub('%s+', ''):lower()
+      end
+    end
+  end
+  return emails
+end
+
 --- @param args string[]
 --- @param cb fun(code: integer, stdout: string, stderr: string)
 local function run(args, cb)
@@ -88,22 +120,15 @@ end
 
 --- @param dir string
 --- @param sha string
---- @param cb fun(emails: string[])
-function M.coauthors(dir, sha, cb)
+--- @param cb fun(trailers: { key: string, value: string }[])
+function M.trailers(dir, sha, cb)
   run(
-    { 'git', '-C', dir, 'show', '-s', '--format=%(trailers:key=Co-authored-by,valueonly)', sha },
+    { 'git', '-C', dir, 'show', '-s', '--format=%(trailers:only,unfold)', sha },
     function(code, stdout)
       if code ~= 0 then
         return cb({})
       end
-      local emails = {}
-      for _, l in ipairs(vim.split(stdout, '\n', { plain = true })) do
-        local e = l:match('<([^>]+)>') or l:match('(%S+@%S+)')
-        if e then
-          emails[#emails + 1] = e:gsub('%s+', ''):lower()
-        end
-      end
-      cb(emails)
+      cb(M.parse_trailers(stdout))
     end
   )
 end
