@@ -9,7 +9,13 @@ M.defaults = {
   -- Each entry is either a plain string (matched exactly) or a positional
   -- table { mode, value }: { 'exact', '<email>' } or { 'domain', '<domain>' }.
   -- 'domain' matches any address at that bare domain (e.g. { 'domain', 'devin.ai' }).
+  --
+  -- Some of these were sourced from: mat-1/slopcheck on Github
   agent_emails = {
+    -- PR review tools (optional, probably explicitly approved by ppl?)
+    -- '165735046+greptile-apps[bot]@users.noreply.github.com', -- Greptile (PR review)
+    -- '136622811+coderabbitai[bot]@users.noreply.github.com', -- CodeRabbit (PR review)
+    -- '96075541+graphite-app[bot]@users.noreply.github.com', -- Graphite (PR review)
     'noreply@anthropic.com', -- Claude / Claude Code
     '41898282+claude[bot]@users.noreply.github.com',
     'noreply@openai.com', -- Codex / ChatGPT
@@ -23,9 +29,6 @@ M.defaults = {
     'copilot@github.com',
     'qwen-coder@alibabacloud.com', -- Qwen
     'noreply@z.ai', -- GLM
-    '165735046+greptile-apps[bot]@users.noreply.github.com', -- Greptile (PR review)
-    '136622811+coderabbitai[bot]@users.noreply.github.com', -- CodeRabbit (PR review)
-    '96075541+graphite-app[bot]@users.noreply.github.com', -- Graphite (PR review)
     'aider@aider.chat', -- Aider.ai
     'openhands@all-hands.dev', -- OpenHands
     '218195315+gemini-cli@users.noreply.github.com', -- Gemini
@@ -33,6 +36,8 @@ M.defaults = {
     '161369871+google-labs-jules[bot]@users.noreply.github.com', -- Google Jules
     '208079219+amazon-q-developer[bot]@users.noreply.github.com', -- Amazon Q
     '138933559+factory-droid[bot]@users.noreply.github.com', -- Factory.ai
+    'v0[bot]@users.noreply.github.com', -- Vercel v0
+    '240665456+kilo-code-bot[bot]@users.noreply.github.com', -- Kilo.ai
     'amp@ampcode.com', -- Amp
     'amp@sourcegraph.com',
     'junie@jetbrains.com>', -- JetBrains
@@ -40,8 +45,6 @@ M.defaults = {
     '189301087+windsurf-bot[bot]@users.noreply.github.com', -- Windsurf
     'assistant@zed.dev', -- Zed
     'agent@warp.dev', -- Warp
-    'v0[bot]@users.noreply.github.com', -- Vercel v0
-    '240665456+kilo-code-bot[bot]@users.noreply.github.com', -- Kilo.ai
   },
   -- Arbitrary commit trailers, beyond Co-authored-by. Keys are trailer names
   -- (matched case-insensitively); each value is a Lua pattern, or a list of

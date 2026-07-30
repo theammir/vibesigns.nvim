@@ -6,9 +6,15 @@
 Marks lines co-authored by LLM agents in the `gitsigns.nvim` signcolumn, so you can always eyeball the code that -- chances are -- was never read by a single living mortal soul.
 I mean seriously, do people even interact with raw code in the industry anymore? This is a cry for help.
 
-A line is considered LLM-written if its `git blame` points at a commit whose author or one of whose co-authors is among the configured e-mail addresses, or whose commit trailers match one of the configured trailer rules (e.g. Cursor's `Made-with: Cursor`).
+> [!NOTE]
+> The purpose of the tool is to flag code that is *potentially* unreviewed, unread or untrusted, being authored and immediately committed by an autonomous agent.
+> There is no implication to flag simpler automation tools, since they act on behalf of codeowners, and usually don't introduce extra complexity into the codebase.
+> That being said, there is no guarantee that detected code didn't receive human attention, even if commited by an agent; or that agents always attribute code authorship.
 
-Yes, this plugin was also vibe-coded, and within like an hour while I was showering, too. Boo-o-o.
+A line is considered LLM-written if it's unchanged in the working tree and one of the following is true:
+
+- The line is authored, or co-authored, by one of the configured emails or users;
+- The line's commit message, as shown by `git blame`, contains one of the configured attribute values (such as `Made-with: Cursor`);
 
 ## Requirements
 
@@ -40,12 +46,42 @@ require('vibesigns').setup({
   color = '#9c6a2f', -- dim orange
   -- Each entry is a plain string (exact match) or a table:
   -- { 'exact', '<email>' } or { 'domain', '<domain>' }.
+  --
+  -- Some of these were sourced from: mat-1/slopcheck on Github
   agent_emails = {
+    -- PR review tools (optional, probably explicitly approved by ppl?)
+    -- '165735046+greptile-apps[bot]@users.noreply.github.com', -- Greptile (PR review)
+    -- '136622811+coderabbitai[bot]@users.noreply.github.com', -- CodeRabbit (PR review)
+    -- '96075541+graphite-app[bot]@users.noreply.github.com', -- Graphite (PR review)
     'noreply@anthropic.com', -- Claude / Claude Code
+    '41898282+claude[bot]@users.noreply.github.com',
     'noreply@openai.com', -- Codex / ChatGPT
+    'codex@openai.com',
     'cursoragent@cursor.com', -- Cursor
+    '199175422+chatgpt-codex-connector[bot]@users.noreply.github.com',
     'devin@devin.ai', -- Devin
-    '198982749+Copilot@users.noreply.github.com', -- GitHub Copilot agent
+    '158243242+devin-ai-integration[bot]@users.noreply.github.com',
+    '198982749+Copilot@users.noreply.github.com', -- GitHub Copilot agents
+    '175728472+Copilot@users.noreply.github.com',
+    'copilot@github.com',
+    'qwen-coder@alibabacloud.com', -- Qwen
+    'noreply@z.ai', -- GLM
+    'aider@aider.chat', -- Aider.ai
+    'openhands@all-hands.dev', -- OpenHands
+    '218195315+gemini-cli@users.noreply.github.com', -- Gemini
+    '176961590+gemini-code-assist[bot]@users.noreply.github.com',
+    '161369871+google-labs-jules[bot]@users.noreply.github.com', -- Google Jules
+    '208079219+amazon-q-developer[bot]@users.noreply.github.com', -- Amazon Q
+    '138933559+factory-droid[bot]@users.noreply.github.com', -- Factory.ai
+    '240665456+kilo-code-bot[bot]@users.noreply.github.com', -- Kilo.ai
+    'v0[bot]@users.noreply.github.com', -- Vercel v0
+    'amp@ampcode.com', -- Amp
+    'amp@sourcegraph.com',
+    'junie@jetbrains.com>', -- JetBrains
+    'agent@replit.com', -- Replit
+    '189301087+windsurf-bot[bot]@users.noreply.github.com', -- Windsurf
+    'assistant@zed.dev', -- Zed
+    'agent@warp.dev', -- Warp
   },
   -- Arbitrary commit trailers. Key = trailer name (case-insensitive),
   -- value = Lua pattern or list of them, matched case-insensitively.
@@ -85,8 +121,7 @@ addresses in its `Co-authored-by:` trailers.
 
 ### `agent_trailers` entries
 
-`Co-authored-by:` is not the only way agentic tools mark their commits — Cursor,
-for instance, adds `Made-with: Cursor`. `agent_trailers` maps a trailer name to
+`agent_trailers` maps a commit trailer (attribute) name to
 the [Lua pattern](https://www.lua.org/manual/5.1/manual.html#5.4.1) (or list of
 patterns) its value must match:
 
@@ -106,13 +141,6 @@ agent_trailers = {
   (`.`, `-`, `+`, `(`, `)`, ...) with `%` if you mean them literally.
 - Use `'.*'` to match on the mere presence of the trailer, whatever its value.
 - Malformed patterns are ignored rather than raising an error.
-- Matching is case-insensitive by default; opt out per rule with
-  `['Made-with'] = { 'Cursor', ignore_case = false }`. Trailer *names* stay
-  case-insensitive either way, as git itself treats them so.
-
-Only trailers you configure are matched. The point is to mark *agent
-authorship*, so trailers left by other tooling (`Change-Id:`, `Signed-off-by:`,
-dependency bots, and so on) stay unsigned unless you add them yourself.
 
 ## Highlight group
 
@@ -125,3 +153,7 @@ highlight group after setup:
 vim.api.nvim_set_hl(0, 'VibeSignsDim', { fg = '#9c6a2f' })
 
 ```
+
+## Special thanks
+
+[mat-1/slopcheck](https://github.com/mat-1/slopcheck) for some agent emails
